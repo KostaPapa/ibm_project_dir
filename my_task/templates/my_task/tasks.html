@@ -1,0 +1,332 @@
+{% extends 'task_scheduler/base.html' %}
+{% load static %}
+
+{% block body %}
+{% block nav %}
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="#">Home</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+{% block page_header %}
+<!-- Page Header -->
+<header class="masthead" style="background-image: url('/static/my_task/img/about-bg.jpg');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <div class="site-heading">
+                    <a class="navbar-brand" href="http://www.ibm.com/us/en/?lnk=m">
+                        <img alt="IBM-Logo" src="{% static 'my_task/img/ibm-logo.png' %}">
+                    </a>
+                    <span class="subheading"><b>IBM Task Manager</b></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock %}
+{% block main_content %}
+<!-- Main Content -->
+<center>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <div class="card" style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Add New Task</h5>
+                    <p class="card-text" align="left">Please use this form to add a new task.</p>
+                    <form method="post">{% csrf_token %}
+                        <div class="form-group">
+                            <input type="text" name="task_title" class="form-control"
+                                   placeholder="Type task title . . .">
+                        </div>
+                        <div class="form-group">
+                            <textarea name="task_desc" class="form-control" rows="3"
+                                      placeholder="Describe task here . . ."></textarea>
+                        </div>
+                        <div class="form-group"> <!-- Date input -->
+                            <input class="form-control" name="due_date" placeholder="MM/DD/YYYY-HH:MM (Due Date)" type="text"/>
+                        </div>
+                        <input type="submit" name="add_new_task"  value="Add" class="btn btn-primary"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</center>
+<hr>
+<div class="container">
+    <input type="text" id="findTask" onkeyup="findFunc()" placeholder="Search for task titles..">
+    {% for task in tasks_all %}
+    {% if forloop.first %}
+    <table class="table" id="allTasks">
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col" class="text-center"><font size="2" face="Arial">ID</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Creator</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Title</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Description</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Status</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Time Created</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Time Due</font></th>
+            <th scope="col" class="text-center"><font size="2" face="Arial">Delete</font></th>
+        </tr>
+        </thead>
+        {% endif %}
+        <tbody>
+        <tr>
+            <td><center><font size="2" face="Arial">{{task.id}}</font></center></td>
+            <td><center><font size="2" face="Arial">{{task.creator}}</font></center></td>
+            <td><center><font size="2" face="Arial">{{task.title}}</font></center></td>
+            <td><center><font size="2" face="Arial">{{task.description}}</font></center></td>
+            <td><center><font size="2" face="Arial">
+                <a href="{% url 'my_task:mark_task_complete' task.id %}">
+                    {{task.status}}
+                </a>
+            </font></center></td>
+            <td><center><font size="2" face="Arial">{{task.time_created}}</font></center></td>
+            <td><center><font size="2" face="Arial">{{task.time_due}}</font></center></td>
+            <td><center><font size="2" face="Arial">
+                <a href="{% url 'my_task:remove_task' task.id %}">
+                    <i class="fa fa-remove" style="font-size:20px;color:red"></i>
+                </a>
+            </font></center></td>
+        </tr>
+        {% if forloop.last %}
+        </tbody>
+    </table>
+    {% endif %}
+    {% empty %}
+    No DATA
+    {% endfor %}
+</div>
+<hr>
+<div class="container">
+    <div class="w3-container">
+        <div class="w3-row">
+            <a href="javascript:void(0)" onclick="openTask(event, 'TasksDueToday');">
+                <div class="w3-third tablink w3-bottombar w3-hover-light-grey w3-padding">
+                    <center><font size="3" face="Arial">
+                        Tasks Due Today: {{count_due_today_and_tomorrow}}
+                    </font></center>
+                </div>
+            </a>
+            <a href="javascript:void(0)" onclick="openTask(event, 'TasksCompleted');">
+                <div class="w3-third tablink w3-bottombar w3-hover-light-grey w3-padding">
+                    <center><font size="3" face="Arial">
+                        Tasks Completed: {{count_tasks_completed}}
+                    </font></center>
+                </div>
+            </a>
+            <a href="javascript:void(0)" onclick="openTask(event, 'TasksOverDue');">
+                <div class="w3-third tablink w3-bottombar w3-hover-light-grey w3-padding">
+                    <center><font size="3" face="Arial">
+                        Tasks Overdue: {{count_overdue}}
+                    </font></center>
+                </div>
+            </a>
+        </div>
+        <div id="TasksDueToday" class="w3-container task" style="display:none">
+            {% for task in due_today_and_tomorrow %}
+            {% if forloop.first %}
+            <table class="table">
+                <thead class="thead-dark">
+                <tr>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">ID</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Creator</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Title</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Description</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Status</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Time Created</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Time Due</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Delete</font></th>
+                </tr>
+                </thead>
+                {% endif %}
+                <tbody>
+                <tr>
+                    <td><center><font size="2" face="Arial">{{task.id}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.creator}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.title}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.description}}</font></center></td>
+                    <td><center><font size="2" face="Arial">
+                        <a href="{% url 'my_task:mark_task_complete' task.id %}">
+                           {{task.status}}
+                        </a>
+                    </font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.time_created}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.time_due}}</font></center></td>
+                    <td><center><font size="2" face="Arial">
+                        <a href="{% url 'my_task:remove_task' task.id %}">
+                            <i class="fa fa-remove" style="font-size:20px;color:red"></i>
+                        </a>
+                    </font></center></td>
+                </tr>
+                {% if forloop.last %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% empty %}
+            No DATA
+            {% endfor %}
+        </div>
+        <div id="TasksCompleted" class="w3-container task" style="display:none">
+            {% for task in tasks_completed %}
+            {% if forloop.first %}
+            <table class="table">
+                <thead class="thead-dark">
+                <tr>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">ID</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Creator</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Title</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Description</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Status</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Time Created</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Time Due</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Delete</font></th>
+                </tr>
+                </thead>
+                {% endif %}
+                <tbody>
+                <tr>
+                    <td><center><font size="2" face="Arial">{{task.id}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.creator}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.title}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.description}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.status}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.time_created}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.time_due}}</font></center></td>
+                    <td><center><font size="2" face="Arial">
+                        <a href="{% url 'my_task:remove_task' task.id %}">
+                            <i class="fa fa-remove" style="font-size:20px;color:red"></i>
+                        </a>
+                    </font></center></td>
+                </tr>
+                {% if forloop.last %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% empty %}
+            No DATA
+            {% endfor %}
+        </div>
+        <div id="TasksOverDue" class="w3-container task" style="display:none">
+            {% for task in over_due %}
+            {% if forloop.first %}
+            <table class="table">
+                <thead class="thead-dark">
+                <tr>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">ID</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Creator</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Title</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Description</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Status</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Time Created</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Time Due</font></th>
+                    <th scope="col" class="text-center"><font size="2" face="Arial">Delete</font></th>
+                </tr>
+                </thead>
+                {% endif %}
+                <tbody>
+                <tr>
+                    <td><center><font size="2" face="Arial">{{task.id}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.creator}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.title}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.description}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.status}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.time_created}}</font></center></td>
+                    <td><center><font size="2" face="Arial">{{task.time_due}}</font></center></td>
+                    <td><center><font size="2" face="Arial">
+                        <a href="{% url 'my_task:remove_task' task.id %}">
+                            <i class="fa fa-remove" style="font-size:20px;color:red"></i>
+                        </a>
+                    </font></center></td>
+                </tr>
+                {% if forloop.last %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% empty %}
+            No DATA
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="{% static 'my_task/js/tablinks.js' %}"></script>
+<script type="text/javascript" src="{% static 'my_task/js/findTasks.js' %}"></script>
+{% endblock %}
+{% block footer %}
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto">
+                <ul class="list-inline text-center">
+                    <li class="list-inline-item">
+                        <a href="#">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="#">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="#">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+                <p class="copyright text-muted">Copyright &copy; Your Website 2018</p>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+{% block extra_js %}
+{% endblock %}
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
