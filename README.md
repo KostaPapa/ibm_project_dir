@@ -8,7 +8,7 @@
 4. Migrate: `sudo docker-compose run web python manage.py migrate`.
 5. Create Superuser: `sudo docker-compose run web python manage.py createsuperuser`.
 6. Run tests: `sudo docker-compose run web python manage.py test`.
-7. Runserver: `sudo docker-compose run web python manage.py runserver`.
+7. Runserver: `sudo docker-compose up`.
 8. Access the application at: `http://127.0.0.1:8000/my-tasks/`.
 9. Due Date format should be: `05/16/2018-22:00`
 10. Access back-end at: `http://127.0.0.1:8000/admin/`.
